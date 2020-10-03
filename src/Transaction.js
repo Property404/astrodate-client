@@ -17,6 +17,20 @@ export class Transaction
         }
     }
 
+    get data()
+    {
+        return{
+            signature: this.signature,
+            version: this.version,
+            type: this.type,
+            origin: this.origin,
+            "for": this.for,
+            content: this.content,
+            nonce: this.nonce,
+            timestamp: this.timestamp
+        }
+    }
+
 
     async stamp(private_key)
     {
