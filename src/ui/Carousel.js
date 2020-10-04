@@ -1,16 +1,13 @@
 /* LikeCarousel (c) 2019 Simone P.M. github.com/simonepm - Licensed MIT */
 import Hammer from "hammerjs";
-export class Carousel {
+class Carousel {
 
     constructor(element_id) {
         this.board = document.getElementById(element_id);
-        this.push({id:"sdfasd", name:"Danny DeVito", age:"54"});
-        this.push({id:"sdfasdf", name:"Frank Reynolds", age:"63"});
-        // handle gestures
-        this._handle()
 
         this.onSwipeLeft = null;
         this.onSwipeRight = null;
+        this.noMatches();
     }
 
     _handle() {
@@ -50,6 +47,21 @@ export class Carousel {
             })
 
         }
+        else
+        {
+            this.noMatches();
+        }
+
+    }
+
+    noMatches()
+    {
+            this.board.innerHTML = `
+                <div style="display:flex;height:100%;width:100%;justify-content:center;align-items:center">
+                <div>No more matches</div>
+                </div>
+            `
+            console.log("No more matches")
 
     }
 
@@ -78,7 +90,6 @@ export class Carousel {
     }
 
     _onPan(e) {
-        console.log("PAN")
         if (!this.isPanning) {
 
             this.isPanning = true
@@ -144,7 +155,7 @@ export class Carousel {
                 // get right border position
                 posX = this.board.clientWidth
                 if(this.onSwipeRight)
-                    this.onSwipeRight(topCard.id)
+                    this.onSwipeRight(this.topCard.id)
 
             } else if (propX < -0.25 && e.direction == Hammer.DIRECTION_LEFT) {
 
@@ -153,7 +164,7 @@ export class Carousel {
                 posX = -(this.board.clientWidth + this.topCard.clientWidth)
 
                 if(this.onSwipeLeft)
-                    this.onSwipeLeft(topCard.id)
+                    this.onSwipeLeft(this.topCard.id)
             }
 
             if (successful) {
@@ -186,13 +197,31 @@ export class Carousel {
 
     push(data) {
 
-        let card = document.createElement('div')
-        card.classList.add('card')
+        const template = document.getElementById("card-template");
+        const card = template.cloneNode(true);
+        const img_el = card.querySelector("img");
+        const card_textbox = card.querySelector(".card-text");
 
-        card.style.backgroundImage ="url('assets/images/demo.png')";
+        let text = `<h4>${data.name}${data.age?", "+data.age:""}</h4>`
+        if(data.location)
+            text+="<br>"+data.location
+        if(data.blurb)
+            text+="<br>"+data.blurb
+        card_textbox.innerHTML = text;
+        img_el.src ="assets/images/demo.png";
         card.id = data.id;
+        card.removeAttribute("hidden");
 
         this.board.insertBefore(card, this.board.firstChild)
+
+        // handle gestures
+        if(! this.handled)
+        {
+            this._handle()
+            this.handled = true;
+        }
     }
 
 }
+const carousel = new Carousel("cardstack-panel");
+export default carousel;

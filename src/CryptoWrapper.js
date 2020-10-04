@@ -32,6 +32,7 @@ export default class CryptoWrapper
 
     static encrypt(message, nonce, pubkey, privkey)
     {
+        const te = new TextEncoder();
         message = te.encode(message);
         nonce = CryptoWrapper.hexToBuffer(nonce);
         pubkey = CryptoWrapper.hexToBuffer(pubkey);
@@ -43,13 +44,15 @@ export default class CryptoWrapper
     }
     static decrypt(message, nonce, pubkey, privkey)
     {
+        const te = new TextDecoder("utf-8");
         message = CryptoWrapper.hexToBuffer(message);
         nonce = CryptoWrapper.hexToBuffer(nonce);
         pubkey = CryptoWrapper.hexToBuffer(pubkey);
         privkey = CryptoWrapper.hexToBuffer(privkey);
-        const plaintext = nacl.box.open(message, nonce, pubkey, privkey);
+        const plaintext = te.decode(nacl.box.open(message, nonce, pubkey, privkey));
         if(plaintext == null)
             throw new Error("Decrypt failed");
+        console.log("Plaintext: "+plaintext)
         return plaintext;
 
     }
@@ -67,11 +70,7 @@ export default class CryptoWrapper
     static generateUniqueId()
     {
         const bytes = nacl.randomBytes(nacl.box.nonceLength);
-        return new Promise((resolve, reject)=>
-            {
-                resolve(CryptoWrapper.bufferToHex(bytes));
-            }
-        )
+        return CryptoWrapper.bufferToHex(bytes);
     }
 
     static _returnKeyPair(keypair)

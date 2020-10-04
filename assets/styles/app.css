@@ -6,16 +6,24 @@
     display:none !important;
 }
 html,
-body {
+body,
+#app
+ {
     width: 100%;
     height: 100%;
     margin: 0;
     padding: 0;
 
-    color: #333;
+
+    background-color:#555;
+    background-color: rgb(230, 230, 250);
 
 	/* Taken from Bootstrap */
     font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+}
+#app{
+    display:flex;
+    flex-direction:column;
 }
 
 button:hover{
@@ -66,12 +74,11 @@ input[type=input], input[type=email]{
     height: 100%;
     position: relative;
     overflow: hidden;
-    background-color: rgb(230, 230, 250);
 }
 
 .card {
-    width: 320px;
-    height: 320px;
+    max-width:700px;
+    height: 100%;
     position: absolute;
     top: 50%;
     left: 50%;
@@ -79,4 +86,134 @@ input[type=input], input[type=email]{
     box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.1);
     background-color: white;
     transform: translateX(-50%) translateY(-50%) scale(0.95);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    border: 4px darkgrey solid;
+    overflow:hidden;
+}
+
+.card .card-text{
+    bottom:1rem;
+}
+
+.card img{
+    pointer-events: none;
+    height:100%;
+}
+
+#menubar{
+    display:flex;
+    background-color: black;  
+    justify-content:space-around;
+}
+
+#menubar button{
+    background-color:transparent;
+    text-shadow: 0 0 0 lightgrey;
+	color: transparent;  
+    background-color:transparent;
+    width:auto;
+}
+
+#likelist
+{
+    width:100%;
+    height:100%;
+    margin:0;
+    padding:0;
+    display:flex;
+    flex-direction:column;
+}
+
+.likeentry
+{
+    width:100%;
+    display:flex;
+    justify-content:space-around;
+    align-items:center;
+    border: 1px solid lightgrey;
+    margin-bottom:.2rem;
+}
+
+.likeentry:hover, .likeentry:active
+{
+    background-color: lightblue;
+}
+
+.likeentry-name
+{
+    text-decoration: bold;
+}
+.likeentry-text
+{
+    color: lightgrey;
+}
+
+.circle-container
+{
+    border-radius:100%;
+    overflow:hidden;
+    width:4rem;
+    height:4rem;
+    margin-top:.5rem;
+    margin-bottom:.5rem;
+    left:0;
+    pointer-events: none;
+}
+
+#messager-panel
+{
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+}
+
+.messager-bar
+{
+    width:100%;
+    display:flex;
+}
+.messager-bar input
+{
+    display:inline-block;
+    width:90%;
+    margin:0;
+    padding:0;
+}
+.messager-bar button
+{
+    display:inline-block;
+    width:10%;
+    margin:0;
+    padding:0;
+    border:none;
+    text-shadow: 0 0 0 white;
+	color: transparent;  
+}
+
+.message
+{
+    display:flex;
+    width:100%;
+}
+.message.origin
+{
+    justify-content:flex-end;
+}
+.message-content
+{
+    background-color: lightgreen;
+    padding:.5rem;
+    margin-right:1rem;
+    margin-left:1rem;
+    border-radius: 20%;
+    margin-bottom:.2rem;
+}
+
+.origin .message-content
+{
+    background-color:grey;
+    color:white;
+    justify-self:end;
 }

@@ -9,20 +9,63 @@
 	<script src="assets/scripts/app.js" defer type="module"></script>
 </head>
 <body>
-	<div class="panel" id="signup-panel" hidden>
-		<h1>Sign up</h1>
-		<label for="email">Email</label>
-		<input type="email" id="signup-email" placeholder="firstname.lastname@nasa.gov"/>
+	<div id="app">
+		<div class="panel" id="signup-panel" hidden>
+			<h1>Sign up</h1>
+			<label for="email">Email</label>
+			<input type="email" id="signup-email" placeholder="firstname.lastname@nasa.gov" />
+	
+			<label for="name">Name</label>
+			<input type="input" id="signup-name" placeholder="Firstname [Lastname]" />
+	
+			<label for="location">Location</label>
+			<input type="input" id="signup-location" placeholder="ISS" />
+	
+			<button id="signup-submit">Sign Up</button>
+		</div>
+	
+		<div class="panel" id="cardstack-panel" hidden>
+		</div>
+	
+		<div class="panel" id="likelist-panel" hidden>
+			<ul id="likelist">
+			</ul>
+		</div>
 
-		<label for="name">Name</label>
-		<input type="input" id="signup-name" placeholder="Firstname [Lastname]"/>
+		<div class="panel" id="messager-panel" hidden>
+			<ul id="messages">
+			</ul>
+			<div class="messager-bar">
+				<input placeholder="Type a message" type="input">
+				<button id="send">💬</button>
+			</div>
+		</div>
 
-		<label for="location">Location</label>
-		<input type="input" id="signup-location" placeholder="ISS"/>
-
-		<button id="signup-submit">Sign Up</button>
+	
+		<div id="menubar">
+			<button id="goto-swipe">💕</button>
+			<button id="goto-messages">💬</button>
+		</div>
 	</div>
-	<div class="panel" id="cardstack-panel" hidden>
+	<div id="message-template" class="message" hidden>
+		<div class="message-content">content</div>
 	</div>
+	<div id="likeentry-template" class="likeentry" hidden>
+		<div class="circle-container">
+			<img src="/assets/images/demo.png">
+		</div>
+		<div class="likentry-text-container">
+			<div class="likeentry-name">Demo Text</div>
+			<div class="likeentry-text">They like you back</div>
+		</div>
+	</div>
+
+	<div id="card-template" class="card" hidden>
+		<img>
+		<div class="card-text">
+			demo text
+		</div>
+	</div>
+
 </body>
 </html>

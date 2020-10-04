@@ -9,6 +9,7 @@ import {Transaction} from "./Transaction";
 import tb from "./TransactionBox";
 import constants from "./constants";
 import ledger from "./Ledger";
+import cw from "./CryptoWrapper"
 
 class Message
 {
@@ -17,7 +18,18 @@ class Message
         this.timestamp = transaction.timestamp;
         this.origin = transaction.origin;
         this.for = transaction.for;
-        const private_key = ledger.getEphemeralKeypair(transaction.for).private_key;
+        const private_key = ledger.getEphemeralKeypair(
+            this.origin == ledger.getCredentials().id? 
+                transaction.for:transaction.origin
+            ).private_key;
+        if(!transaction.content)
+            throw new Error("NO CONTENT");
+        if(!transaction.nonce)
+            throw new Error("NO NONCE");
+        if(!pubkey)
+            throw new Error("NO PUBKEY");
+        if(!private_key)
+            throw new Error("NO PRIVATE_KEY");
         this.content = cw.decrypt(transaction.content, transaction.nonce, pubkey, private_key);
     }
 }
@@ -28,6 +40,7 @@ class User
         this.available_properties = ["id", "public_key", "blurb",
         "ephemeral_key", "liked", "likes_back",
         "picture", "gender", "age","location","name"];
+        this.messages = [];
     }
 
     update(prop, tkey, transaction)
@@ -55,7 +68,7 @@ class User
         }
     }
 
-    data()
+    get data()
     {
         const d = {};
         for(const prop of this.available_properties)
@@ -63,6 +76,7 @@ class User
             d[prop] = this[prop];
         }
         d["messages"] = this["messages"];
+        return d;
     }
 
 
@@ -78,18 +92,25 @@ class Monolith
         self.public_key = cred.public_key;
         this.users[self.id] = self;
 
+        this.callbacks = [];
+
         // These need to be pushed back to TransactionBox, eventually
         this.unconfirmed_transactions = [];
     }
 
     initiate()
     {
-        tb.setProcessCallback(this._process.bind(this));
+        tb.setProcessCallback(this._process.bind(this),
+        ()=>{
+            if(this.unconfirmed_transactions.length)
+            {
+            }
+        }
+        );
     }
 
     async _process(transaction)
     {
-        console.log(this.users);
         if(transaction.type === Transaction.TRANSACTION_TYPE_NEW_PUBKEY)
         {
             // Eek! New User
@@ -100,7 +121,10 @@ class Monolith
                 return null;
             }
             const id = transaction["for"];
-            this.users[id] = new User();
+            if(!this.users[id])
+            {
+                this.users[id] = new User();
+            }
             const user =this.users[id];
             user.update("id", "for", transaction);
             user.update("public_key", "content", transaction);
@@ -112,7 +136,7 @@ class Monolith
             const user = this.users[id];
             if(!id || !user || !transaction.verify(user.public_key))
             {
-                console.log("Unconfirmed user transaction, pushing back");
+                console.log("Unconfirmed user transaction, pushing back", transaction);
                 this.unconfirmed_transactions.push(transaction);
                 return null;
             }
@@ -129,7 +153,7 @@ class Monolith
                     return null;
                 }
             }
-            else if(transaction.origin == this.credentials.id)
+            else if(transaction.origin == ledger.getCredentials().id)
             {
                 // Something WE created
                 // Our baby
@@ -137,7 +161,7 @@ class Monolith
 
                 const obj_of_affection = this.users[transaction.for];
                 if (!obj_of_affection) {
-                    console.log("Unconfirmed message from us, pushing back");
+                    console.log("Unconfirmed message from us("+transaction.nonce+transaction.for+"), pushing back");
                     this.unconfirmed_transactions.push(transaction);
                     return null;
                 }
@@ -145,10 +169,18 @@ class Monolith
                 if(transaction.type === Transaction.TRANSACTION_TYPE_LIKE)
                 {
                     obj_of_affection.update("liked", "nonce", transaction);
+                    console.log("You like someone")
                 }
                 else if(transaction.type === Transaction.TRANSACTION_TYPE_MESSAGE)
                 {
-                    user.messages.push(new Message(transaction, obj_of_affection.public_key));
+                    if(!obj_of_affection.ephemeral_key)
+                    {
+                        console.log("No ephemeral key yet");
+                        this.unconfirmed_transactions.push(transaction);
+                        return null;
+                    }
+                    if(transaction.version >= Transaction.CURRENT_TRANSACTION_VERSION)
+                        obj_of_affection.messages.push(new Message(transaction, obj_of_affection.ephemeral_key));
                 }
                 else
                 {
@@ -160,9 +192,8 @@ class Monolith
             {
                 // Discard if not for us
                 const dest = transaction.for;
-                if(dest != this.credentials.id)
+                if(dest != ledger.getCredentials().id)
                 {
-                    console.log("Not for us...discarding")
                     return null
                 }
                 
@@ -171,10 +202,19 @@ class Monolith
                     // recieve ephemeral public key
                     user.update("ephemeral_key", "content", transaction);
                     user.update("likes_back", "nonce", transaction);
+                    console.log("Someone likes you")
                 }
                 else if(transaction.type === Transaction.TRANSACTION_TYPE_MESSAGE)
                 {
-                    user.messages.push(new Message(transaction, obj_of_affection.public_key));
+                    if(!(user.ephemeral_key))
+                    {
+                        console.log("No ephemeral key yet");
+                        this.unconfirmed_transactions.push(transaction);
+                        return null;
+                    }
+                    console.log("Ephemeral key:", user.ephemeral_key)
+                    if(transaction.version >= Transaction.CURRENT_TRANSACTION_VERSION)
+                        user.messages.push(new Message(transaction, user.ephemeral_key));
                 }
                 else
                 {
@@ -182,6 +222,10 @@ class Monolith
                     return null;
                 }
             }
+        }
+        for(const callback of this.callbacks)
+        {
+            callback();
         }
         return transaction;
     }
