@@ -4,7 +4,7 @@ import tb from "./TransactionBox";
 import cw from "./CryptoWrapper";
 import ledger from './Ledger'
 
-async function createUser(email="null@nasa.com")
+export async function createUser(email="null@nasa.com")
 {
   const keypair = cw.generateAuthKeyPair();
   const data = {
@@ -28,10 +28,13 @@ async function createUser(email="null@nasa.com")
     throw new Error("Initial transaction invalid")
   }
 
-  tb.addPendingTransactions([ta]);
-  ledger.saveCredentials({
+  tb.sendTransactions([ta]);
+  
+  const cred = {
       id: ta.for,
       private_key: keypair.private_key,
       public_key: keypair.public_key,
-  })
+  }
+  ledger.saveCredentials(cred)
+  return cred;
 }

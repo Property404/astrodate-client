@@ -6,6 +6,11 @@ export class Transaction
         this._setFields();
         if(obj)
         {
+            if(!obj.type)
+            {
+                console.log("Obj", obj)
+                console.error("Can't form Transaction without type")
+            }
             if (obj.version) this.version = obj.version;
             if (obj.type) this.type = obj.type;
             if (obj.origin) this.origin = obj.origin;
@@ -41,6 +46,22 @@ export class Transaction
         throw new Error("NOT A PROPERTY YOU LONG EARED GALOOT");
     }
 
+    isStamped()
+    {
+        if(this.version === null||
+            this.type == null ||
+            this.origin === null||
+            this.for == null ||
+            this.content == null||
+            this.nonce == null||
+            this.signature == null||
+            this.timestamp == null
+            )
+        {
+            return false;
+        };
+        return true;
+    }
 
     async stamp(private_key)
     {
@@ -96,7 +117,7 @@ export class Transaction
         return merged_message;
     }
 }
-Transaction.CURRENT_TRANSACTION_VERSION="0";
+Transaction.CURRENT_TRANSACTION_VERSION="1";
 
 Transaction.TRANSACTION_TYPE_NEW_PUBKEY = "new_pubkey";
 Transaction.TRANSACTION_TYPE_UPDATE_BIO = "update_bio";

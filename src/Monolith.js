@@ -8,6 +8,7 @@
 import {Transaction} from "./Transaction";
 import tb from "./TransactionBox";
 import constants from "./constants";
+import ledger from "./Ledger";
 
 class Message
 {
@@ -20,12 +21,12 @@ class Message
         this.content = cw.decrypt(transaction.content, transaction.nonce, pubkey, private_key);
     }
 }
-class User extends Updatable
+class User
 {
     constructor()
     {
         this.available_properties = ["id", "public_key", "blurb",
-        "ephemeral_key",
+        "ephemeral_key", "liked", "likes_back",
         "picture", "gender", "age","location","name"];
     }
 
@@ -35,7 +36,7 @@ class User extends Updatable
         {
             throw new Error("Not a valid property")
         }
-        preprop = prop;
+        const preprop = prop;
         prop = "_"+prop;
         if(!(transaction instanceof Transaction))
             throw new Error("transaction not Transaction")
@@ -48,7 +49,7 @@ class User extends Updatable
         {
             this[prop] = {
                 "value": transaction[tkey],
-                "timestamp": transaction[timestamp]
+                "timestamp": transaction["timestamp"]
             }
             this[preprop] = transaction[tkey];
         }
@@ -75,14 +76,20 @@ class Monolith
         const cred = ledger.getCredentials();
         self.id = cred.id;
         self.public_key = cred.public_key;
-        this.users.push(self);
+        this.users[self.id] = self;
 
         // These need to be pushed back to TransactionBox, eventually
         this.unconfirmed_transactions = [];
     }
 
+    initiate()
+    {
+        tb.setProcessCallback(this._process.bind(this));
+    }
+
     async _process(transaction)
     {
+        console.log(this.users);
         if(transaction.type === Transaction.TRANSACTION_TYPE_NEW_PUBKEY)
         {
             // Eek! New User
@@ -103,7 +110,7 @@ class Monolith
             // User transaction - confirm validity
             const id = transaction.origin;
             const user = this.users[id];
-            if(!id || !transaction.verify(user.public_key))
+            if(!id || !user || !transaction.verify(user.public_key))
             {
                 console.log("Unconfirmed user transaction, pushing back");
                 this.unconfirmed_transactions.push(transaction);
@@ -128,20 +135,19 @@ class Monolith
                 // Our baby
                 // Our precious precious baby
 
+                const obj_of_affection = this.users[transaction.for];
+                if (!obj_of_affection) {
+                    console.log("Unconfirmed message from us, pushing back");
+                    this.unconfirmed_transactions.push(transaction);
+                    return null;
+                }
+
                 if(transaction.type === Transaction.TRANSACTION_TYPE_LIKE)
                 {
-                    /* Ephemeral keys should be loaded in localStorage (Ledger) */
-                    /* Nothing to do */
+                    obj_of_affection.update("liked", "nonce", transaction);
                 }
                 else if(transaction.type === Transaction.TRANSACTION_TYPE_MESSAGE)
                 {
-                    const obj_of_affection = this.users[transaction.for];
-                    if(!obj_of_affection)
-                    {
-                        console.log("Unconfirmed message from us, pushing back");
-                        this.unconfirmed_transactions.push(transaction);
-                        return null;
-                    }
                     user.messages.push(new Message(transaction, obj_of_affection.public_key));
                 }
                 else
@@ -164,6 +170,7 @@ class Monolith
                 {
                     // recieve ephemeral public key
                     user.update("ephemeral_key", "content", transaction);
+                    user.update("likes_back", "nonce", transaction);
                 }
                 else if(transaction.type === Transaction.TRANSACTION_TYPE_MESSAGE)
                 {
@@ -179,3 +186,6 @@ class Monolith
         return transaction;
     }
 }
+
+const mono = new Monolith();
+export default  mono;

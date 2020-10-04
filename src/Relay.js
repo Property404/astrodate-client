@@ -1,4 +1,12 @@
 import {Transaction} from "./Transaction";
+
+function assert(condition)
+{
+    if(!condition)
+    {
+        throw new Error("Assertion failed");
+    }
+}
 export class Relay
 {
     _getApiUrl(meth)
@@ -15,7 +23,7 @@ export class Relay
 
     async poll()
     {
-        const url = _getApiUrl("poll?since="+this.since);
+        const url = this._getApiUrl("poll?since="+this.since);
         const raw_response = await fetch(url,{method: "GET"});
         const response = await raw_response.json();
         if(response.error || response.since === null || response.since === undefined)
@@ -24,7 +32,7 @@ export class Relay
         }
         this.since = response.since;
 
-        return response;
+        return response.transactions;
     }
 
     async push(transactions)

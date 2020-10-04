@@ -1,6 +1,7 @@
 import { Relay } from "./Relay";
 import constants from "./constants"
 import ledger from "./Ledger"
+import {Transaction} from "./Transaction"
 
 export class TransactionBox
 {
@@ -30,12 +31,14 @@ export class TransactionBox
 
     sendTransaction(transaction)
     {
+        if(!transaction.isStamped())
+            throw new Error("Stamp the dang transaction");
         this.sendTransactions([transaction]);
     }
 
     receiveTransactions(transactions)
     {
-        this._inbox.push(...transaction);
+        this._inbox.push(...transactions);
     }
 
     pollRelays()
@@ -46,7 +49,7 @@ export class TransactionBox
                 const trans_array = [];
                 for(const t of trans)
                 {
-                    trans_array.push(new Transaction(t));
+                    trans_array.push(new Transaction(t[0]));
                 }
                 this.receiveTransactions(trans_array);
             });
@@ -60,14 +63,18 @@ export class TransactionBox
         while(transaction = this._inbox.pop())
         {
             if (transaction.signature == null)
-                console.error("Processing null signature")
+            {
+                console.error("Processing null signature");
+            }
 
-            if(this._signatures.includes(transaction.signature))
+            if(this._signatures.has(transaction.signature))
                 continue;
 
             this._signatures.add(transaction.signature);
 
             /*TODO: verify?? */
+            if(!transaction.isStamped())
+                throw new Exception("Stamp your dang things man");
 
             this._process_callback(transaction).then(data => {
                 if(data)
@@ -76,11 +83,13 @@ export class TransactionBox
         }
     }
 
-    setProcessCallback(callback, timer=1000)
+    async setProcessCallback(callback, timer=1000)
     {
-        this._inbox.push(...ledger.getTransactions())
+        const transactions = await ledger.getTransactions();
+        this._inbox.push(...transactions)
         this._process_callback = callback;
-        setTimeout(this._process.bind(this), timer);
+        setInterval(this.pollRelays.bind(this), timer*2);
+        setInterval(this._process.bind(this), timer);
     }
 }
 const tb = new TransactionBox();

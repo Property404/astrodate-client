@@ -5,7 +5,7 @@ export class Ledger
     initiate()
     {
         this.db = new Dexie("ledger");
-        db.version(1).stores({
+        return this.db.version(1).stores({
             // Signature acts as unique ID
             transactions:"signature,version,type,content,for,origin,nonce,timestamp"
         });
@@ -25,9 +25,10 @@ export class Ledger
         return Promise.all(promise_array);
     }
 
-    getTransactions()
+    async getTransactions()
     {
-        return this.db.transactions.toArray().map(d=>new Transaction(d));
+        const arr = await this.db.transactions.toArray();
+        return arr.map(d=>new Transaction(d));
     }
 
 
