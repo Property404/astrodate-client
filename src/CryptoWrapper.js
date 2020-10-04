@@ -29,6 +29,31 @@ export default class CryptoWrapper
         return true;
 
     }
+
+    static encrypt(message, nonce, pubkey, privkey)
+    {
+        message = te.encode(message);
+        nonce = CryptoWrapper.hexToBuffer(nonce);
+        pubkey = CryptoWrapper.hexToBuffer(pubkey);
+        privkey = CryptoWrapper.hexToBuffer(privkey);
+        const ciphertext = nacl.box(message, nonce, pubkey, privkey);
+        if(ciphertext == null)
+            throw new Error("Encrypt failed");
+        return CryptoWrapper.bufferToHex(ciphertext);
+    }
+    static decrypt(message, nonce, pubkey, privkey)
+    {
+        message = CryptoWrapper.hexToBuffer(message);
+        nonce = CryptoWrapper.hexToBuffer(nonce);
+        pubkey = CryptoWrapper.hexToBuffer(pubkey);
+        privkey = CryptoWrapper.hexToBuffer(privkey);
+        const plaintext = nacl.box.open(message, nonce, pubkey, privkey);
+        if(plaintext == null)
+            throw new Error("Decrypt failed");
+        return plaintext;
+
+    }
+
     static generateEncryptionKeyPair()
     {
         return CryptoWrapper._returnKeyPair(nacl.box.keyPair());
@@ -41,15 +66,10 @@ export default class CryptoWrapper
 
     static generateUniqueId()
     {
-        const bytes = nacl.randomBytes(256/8);
+        const bytes = nacl.randomBytes(nacl.box.nonceLength);
         return new Promise((resolve, reject)=>
             {
-                crypto.subtle.digest("sha-256", bytes).then
-                (
-                    result=>{
-                        resolve(CryptoWrapper.bufferToHex(result));
-                    }
-                ).catch(e=>reject(e));
+                resolve(CryptoWrapper.bufferToHex(bytes));
             }
         )
     }

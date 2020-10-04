@@ -31,6 +31,7 @@ async function createUser(email="null@nasa.com")
   tb.addPendingTransactions([ta]);
   ledger.saveCredentials({
       id: ta.for,
-      private_key: keypair.private_key
+      private_key: keypair.private_key,
+      public_key: keypair.public_key,
   })
 }

@@ -31,6 +31,16 @@ export class Transaction
         }
     }
 
+    get message(){
+        throw new Error("NOT A PROPERTY YOU LONG EARED GALOOT");
+    }
+    get dest(){
+        throw new Error("NOT A PROPERTY YOU LONG EARED GALOOT");
+    }
+    get destination(){
+        throw new Error("NOT A PROPERTY YOU LONG EARED GALOOT");
+    }
+
 
     async stamp(private_key)
     {

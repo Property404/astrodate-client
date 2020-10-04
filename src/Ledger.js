@@ -4,7 +4,7 @@ export class Ledger
 {
     initiate()
     {
-        const db = new Dexie("ledger");
+        this.db = new Dexie("ledger");
         db.version(1).stores({
             // Signature acts as unique ID
             transactions:"signature,version,type,content,for,origin,nonce,timestamp"
@@ -14,7 +14,7 @@ export class Ledger
     // Returns promise;
     storeTransaction(transaction)
     {
-        return db.transactions.put(transaction.data);
+        return this.db.transactions.put(transaction.data);
     }
 
     storeTransactions(transactions)
@@ -27,7 +27,25 @@ export class Ledger
 
     getTransactions()
     {
-        return db.transactions.toArray().map(d=>new Transaction(d));
+        return this.db.transactions.toArray().map(d=>new Transaction(d));
+    }
+
+
+    _saveString(id, value)
+    {
+        if(!id || !value)
+        {
+            throw new Error("_storeString: invalid args");
+        }
+        localStorage.setItem(Ledger._PREFIX+id, value);
+    }
+    _getString(id)
+    {
+        if(!id)
+        {
+            throw new Error("_storeString: invalid args");
+        }
+        return localStorage.getItem(Ledger._PREFIX+id);
     }
 
     saveCredentials(data)
@@ -36,16 +54,34 @@ export class Ledger
         {
             throw new Error("Can't save credentials - bad args")
         }
-        localStorage.setItem(Ledger._PREFIX + "id", data.id);
-        localStorage.setItem(Ledger._PREFIX + "private_key", data.private_key);
+        this._saveString("id", data.id);
+        this._saveString("private_key", data.private_key);
+        this._saveString("public_key", data.public_key);
     }
 
     getCredentials()
     {
         return {
-            id: localStorage.getItem(Ledger._PREFIX + "id"),
-            private_key: localStorage.getItem(Ledger._PREFIX + "private_key")
+            id: this._getString("id"),
+            private_key: this._getString("private_key"),
+            public_key: this._getString("public_key")
         }
+    }
+
+    saveEphemeralKeypair(user_id, keypair)
+    {
+       this._saveString(user_id+"_public_key", keypair.public_key);
+       this._saveString(user_id+"_private_key", keypair.private_key);
+    }
+
+    getEphemeralKeypair(user_id)
+    {
+       const pub = this._getString(user_id+"_public_key");
+       const priv = this._getString(user_id+"_private_key");
+       return {
+           "private_key": priv,
+           "public_key": pub
+       }
     }
 }
 Ledger._PREFIX = "astrodate-ledger-";

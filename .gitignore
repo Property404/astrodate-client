@@ -1,5 +1,10 @@
 *
 !src
+!src/ui
+!assets
+!assets/images
+!assets/styles
+!*.png
 !*.js
 !*.css
 !*.html

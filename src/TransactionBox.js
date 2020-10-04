@@ -1,6 +1,6 @@
 import { Relay } from "./Relay";
 import constants from "./constants"
-import ledger from "./ledger;"
+import ledger from "./Ledger"
 
 export class TransactionBox
 {
@@ -12,7 +12,6 @@ export class TransactionBox
         this._process_callback = null;
         this.relays.push(new Relay(constants.BOUNCER_SERVER));
 
-        this._inbox.push(...ledger.getTransactions())
     }
 
     get relays()
@@ -39,6 +38,22 @@ export class TransactionBox
         this._inbox.push(...transaction);
     }
 
+    pollRelays()
+    {
+        for(const relay of this.relays)
+        {
+            relay.poll().then( trans=> {
+                const trans_array = [];
+                for(const t of trans)
+                {
+                    trans_array.push(new Transaction(t));
+                }
+                this.receiveTransactions(trans_array);
+            });
+                
+        }
+    }
+
     _process()
     {
         let transaction;
@@ -54,14 +69,16 @@ export class TransactionBox
 
             /*TODO: verify?? */
 
-            ledger.storeTransaction(transaction);
-
-            this._process_callback(transaction);
+            this._process_callback(transaction).then(data => {
+                if(data)
+                    ledger.storeTransaction(data)
+            });
         }
     }
 
     setProcessCallback(callback, timer=1000)
     {
+        this._inbox.push(...ledger.getTransactions())
         this._process_callback = callback;
         setTimeout(this._process.bind(this), timer);
     }
